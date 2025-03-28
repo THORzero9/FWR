@@ -177,6 +177,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Auth API (Mock implementation for frontend development)
+  
+  // GET current user
+  apiRouter.get("/user", (req, res) => {
+    // This would normally check session/JWT
+    // For demo purposes, it will just return a 401 for the frontend to handle
+    res.status(401).json({ message: "Not authenticated" });
+  });
+  
+  // POST login
+  apiRouter.post("/login", (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      // Demo validation
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password required" });
+      }
+      
+      // In a real app, you would verify credentials against the database
+      // For now, mock a successful login
+      res.json({
+        id: 1,
+        username,
+        email: `${username}@example.com`
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Error during login" });
+    }
+  });
+  
+  // POST register
+  apiRouter.post("/register", (req, res) => {
+    try {
+      const { username, email, password } = req.body;
+      
+      // Demo validation
+      if (!username || !email || !password) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+      
+      // In a real app, you would create a user in the database
+      // For now, mock a successful registration
+      res.status(201).json({
+        id: 1,
+        username,
+        email
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Error during registration" });
+    }
+  });
+  
+  // POST logout
+  apiRouter.post("/logout", (req, res) => {
+    // In a real app, you would destroy the session
+    res.status(200).json({ message: "Logged out successfully" });
+  });
+  
   // Register API routes
   app.use("/api", apiRouter);
   

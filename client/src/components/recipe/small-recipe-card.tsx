@@ -1,46 +1,51 @@
 import { Recipe } from "@shared/schema";
+import { Clock, ChefHat } from "lucide-react";
+import { Link } from "wouter";
 
 interface SmallRecipeCardProps {
   recipe: Recipe;
 }
 
 export default function SmallRecipeCard({ recipe }: SmallRecipeCardProps) {
-  // Format prep time
-  const formatPrepTime = (minutes: number) => {
-    if (minutes < 60) return `${minutes} mins`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours} hr ${mins} mins` : `${hours} hr`;
-  };
-  
-  // Format rating
-  const formatRating = (rating: number | null | undefined) => {
-    if (rating === null || rating === undefined) return "N/A";
-    return (rating / 10).toFixed(1);
-  };
+  // Get the first 3 ingredients to display
+  const displayIngredients = recipe.ingredients.slice(0, 3);
+  const moreIngredients = recipe.ingredients.length > 3 
+    ? `+${recipe.ingredients.length - 3} more` 
+    : "";
   
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="h-24 bg-neutral-100">
-        {recipe.imageUrl ? (
-          <img 
-            src={recipe.imageUrl} 
-            alt={recipe.name} 
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-neutral-200">
-            <span className="material-icons text-2xl text-neutral-400">restaurant</span>
+    <Link href={`/recipes/${recipe.id}`}>
+      <div className="bg-white rounded-lg shadow p-3 cursor-pointer hover:shadow-md transition-shadow">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h3 className="font-medium text-base">{recipe.name}</h3>
+            <p className="text-xs text-neutral-500 mt-1 line-clamp-2">
+              {recipe.description}
+            </p>
           </div>
-        )}
-      </div>
-      <div className="p-3">
-        <h4 className="font-medium text-sm">{recipe.name}</h4>
-        <div className="flex justify-between items-center mt-1">
-          <span className="text-xs text-neutral-500">{formatPrepTime(recipe.prepTime)}</span>
-          <span className="text-xs text-primary">{formatRating(recipe.rating)} ★</span>
+          <div className="bg-primary/10 rounded-full w-8 h-8 flex items-center justify-center text-primary">
+            <ChefHat size={16} />
+          </div>
+        </div>
+        
+        <div className="mt-2 flex items-center text-xs text-neutral-500">
+          <Clock size={14} />
+          <span className="ml-1">{recipe.prepTime} min</span>
+          
+          <div className="ml-auto flex items-center">
+            <span className="material-icons" style={{ fontSize: '14px' }}>star</span>
+            <span className="ml-1">{(recipe.rating !== null ? recipe.rating / 10 : 5.0).toFixed(1)}</span>
+          </div>
+        </div>
+        
+        <div className="mt-2">
+          <p className="text-xs text-neutral-600 font-medium">Ingredients:</p>
+          <p className="text-xs text-neutral-500 mt-0.5">
+            {displayIngredients.join(", ")}
+            {moreIngredients && <span className="text-neutral-400"> {moreIngredients}</span>}
+          </p>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

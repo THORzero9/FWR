@@ -6,6 +6,7 @@ import CategoryFilter from "@/components/food/category-filter";
 import ItemCard from "@/components/food/item-card";
 import ExpiringItemCard from "@/components/food/expiring-item-card";
 import AddItemDialog from "@/components/food/add-item-dialog";
+import RecipeSuggestions from "@/components/recipe/recipe-suggestions";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -123,6 +124,13 @@ export default function Inventory() {
         onCategoryChange={setSelectedCategory} 
       />
 
+      {/* Recipe Suggestions Section */}
+      {foodItems && foodItems.length > 0 && (
+        <div className="mb-6">
+          <RecipeSuggestions foodItems={foodItems} />
+        </div>
+      )}
+      
       {/* Expiring Soon Section */}
       <h2 className="text-lg font-medium mb-3">Expiring Soon</h2>
       <div className="mb-6">

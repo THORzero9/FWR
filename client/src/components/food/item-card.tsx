@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import EditItemDialog from "./edit-item-dialog";
+import { Pencil } from "lucide-react";
 
 interface ItemCardProps {
   item: FoodItem;
@@ -16,6 +18,7 @@ export default function ItemCard({ item }: ItemCardProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   
   // Mutation to toggle favorite status
   const { mutate: toggleFavorite } = useMutation({
@@ -183,16 +186,36 @@ export default function ItemCard({ item }: ItemCardProps) {
               Close
             </Button>
             <Button 
+              variant="default"
+              className="flex-1 bg-primary hover:bg-primary/90 flex items-center justify-center gap-1"
+              onClick={() => {
+                setDialogOpen(false);
+                setEditDialogOpen(true);
+              }}
+            >
+              <Pencil size={16} />
+              Edit
+            </Button>
+            <Button 
               variant="destructive"
               className="flex-1"
               onClick={() => deleteItem()}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete Item"}
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Item Dialog */}
+      {editDialogOpen && (
+        <EditItemDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          item={item}
+        />
+      )}
     </>
   );
 }

@@ -1,15 +1,20 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { LogOut, User, ChevronDown } from "lucide-react";
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+  const { user, logoutMutation } = useAuth();
+  const [, setLocation] = useLocation();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,6 +24,11 @@ export default function Header() {
     });
     setSearchOpen(false);
     setSearchQuery("");
+  };
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+    setLocation("/auth");
   };
 
   return (
@@ -48,6 +58,37 @@ export default function Header() {
           >
             <span className="material-icons">notifications</span>
           </button>
+          
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:bg-white/10 p-1 rounded-full flex items-center gap-1"
+                >
+                  <User size={20} />
+                  <span className="hidden sm:inline text-sm font-medium">{user.username}</span>
+                  <ChevronDown size={16} className="hidden sm:inline" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleLogout} className="text-red-500">
+                  <LogOut size={16} className="mr-2" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link href="/auth">
+              <Button 
+                variant="ghost" 
+                className="text-white hover:bg-white/10"
+                size="sm"
+              >
+                Login
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 

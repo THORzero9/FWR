@@ -4,6 +4,8 @@ import Header from "@/components/layout/header";
 import BottomNav from "@/components/layout/bottom-nav";
 import { useState } from "react";
 import AddItemDialog from "@/components/food/add-item-dialog";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/lib/protected-route";
 
 // Pages
 import Inventory from "@/pages/inventory";
@@ -11,8 +13,9 @@ import Stats from "@/pages/stats";
 import Recipes from "@/pages/recipes";
 import Share from "@/pages/share";
 import NotFound from "@/pages/not-found";
+import AuthPage from "@/pages/auth-page";
 
-function App() {
+function AppRouter() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   return (
@@ -21,10 +24,11 @@ function App() {
       
       <main className="flex-grow overflow-y-auto pb-16">
         <Switch>
-          <Route path="/" component={Inventory} />
-          <Route path="/stats" component={Stats} />
-          <Route path="/recipes" component={Recipes} />
-          <Route path="/share" component={Share} />
+          <ProtectedRoute path="/" component={Inventory} />
+          <ProtectedRoute path="/stats" component={Stats} />
+          <ProtectedRoute path="/recipes" component={Recipes} />
+          <ProtectedRoute path="/share" component={Share} />
+          <Route path="/auth" component={AuthPage} />
           <Route component={NotFound} />
         </Switch>
       </main>
@@ -47,6 +51,14 @@ function App() {
       
       <Toaster />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppRouter />
+    </AuthProvider>
   );
 }
 
