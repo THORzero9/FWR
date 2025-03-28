@@ -92,7 +92,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
     },
-    initialData: storedUser
+    initialData: storedUser,
+    staleTime: 0, // Always refetch when requested
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnMount: true // Refetch when component mounts
   });
 
   const loginMutation = useMutation({
@@ -115,7 +118,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: (user: User) => {
+      console.log("Login successful, updating query data and redirecting");
       queryClient.setQueryData(["/api/user"], user);
+      
+      // Force a page reload to ensure proper auth state
+      window.location.href = "/";
+      
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.username}!`,
@@ -150,7 +158,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: (user: User) => {
+      console.log("Registration successful, updating query data and redirecting");
       queryClient.setQueryData(["/api/user"], user);
+      
+      // Force a page reload to ensure proper auth state
+      window.location.href = "/";
+      
       toast({
         title: "Registration successful",
         description: `Welcome, ${user.username}!`,
@@ -184,7 +197,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: () => {
+      console.log("Logout successful, updating query data and redirecting");
       queryClient.setQueryData(["/api/user"], null);
+      
+      // Force a page reload to ensure proper auth state
+      window.location.href = "/auth";
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
