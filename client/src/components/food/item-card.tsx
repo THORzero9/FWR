@@ -56,12 +56,20 @@ export default function ItemCard({ item }: ItemCardProps) {
   // Get category icon
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case "Fruits": return "eco";
-      case "Vegetables": return "eco";
-      case "Dairy": return "egg";
-      case "Meat": return "shopping_basket";
-      case "Grains": return "grain";
-      default: return "kitchen";
+      case "Fruits": return "nutrition";
+      case "Vegetables": return "grass";
+      case "Dairy": return "breakfast_dining";
+      case "Meat": return "lunch_dining";
+      case "Grains": return "breakfast_dining";
+      case "Seafood": return "set_meal";
+      case "Nuts": return "egg_alt";
+      case "Bakery": return "bakery_dining";
+      case "Frozen": return "ac_unit";
+      case "Canned": return "dinner_dining";
+      case "Beverages": return "local_cafe";
+      case "Snacks": return "cookie";
+      case "Condiments": return "sauce";
+      default: return "restaurant";
     }
   };
   
@@ -72,9 +80,14 @@ export default function ItemCard({ item }: ItemCardProps) {
         onClick={() => setDialogOpen(true)}
       >
         <div className="flex justify-between items-start">
-          <div>
-            <h3 className="font-medium">{item.name}</h3>
-            <p className="text-sm text-neutral-500">{item.quantity} {item.unit}</p>
+          <div className="flex items-center gap-2">
+            <div className="bg-primary/10 rounded-full w-7 h-7 flex items-center justify-center text-primary text-sm">
+              <span className="material-icons" style={{ fontSize: '16px' }}>{getCategoryIcon(item.category)}</span>
+            </div>
+            <div>
+              <h3 className="font-medium">{item.name}</h3>
+              <p className="text-sm text-neutral-500">{item.quantity} {item.unit}</p>
+            </div>
           </div>
           <button 
             onClick={(e) => {
