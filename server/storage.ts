@@ -235,16 +235,20 @@ export class DatabaseStorage implements IStorage {
       
       // Check if tables have data
       const foodItemsCount = await db.select({ count: sql<number>`count(*)` }).from(foodItems);
-      console.log("Food items count:", foodItemsCount[0]?.count);
+      console.log("Food items count:", foodItemsCount[0]?.count, "Type:", typeof foodItemsCount[0]?.count);
       
       const recipesCount = await db.select({ count: sql<number>`count(*)` }).from(recipes);
-      console.log("Recipes count:", recipesCount[0]?.count);
+      console.log("Recipes count:", recipesCount[0]?.count, "Type:", typeof recipesCount[0]?.count);
       
       const foodBanksCount = await db.select({ count: sql<number>`count(*)` }).from(foodBanks);
-      console.log("Food banks count:", foodBanksCount[0]?.count);
+      console.log("Food banks count:", foodBanksCount[0]?.count, "Type:", typeof foodBanksCount[0]?.count);
       
       const nearbyUsersCount = await db.select({ count: sql<number>`count(*)` }).from(nearbyUsers);
-      console.log("Nearby users count:", nearbyUsersCount[0]?.count);
+      console.log("Nearby users count:", nearbyUsersCount[0]?.count, "Type:", typeof nearbyUsersCount[0]?.count);
+      
+      console.log("Should initialize food items (=== 0):", foodItemsCount[0]?.count === 0);
+      console.log("Should initialize food items (Number === 0):", Number(foodItemsCount[0]?.count) === 0);
+      console.log("Food items count value:", Number(foodItemsCount[0]?.count));
       
       // Initialize with sample data if empty
       if (foodBanksCount[0]?.count === 0) {
@@ -357,7 +361,8 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      if (foodItemsCount[0]?.count === 0) {
+      // Explicitly convert to number to ensure proper comparison
+      if (Number(foodItemsCount[0]?.count) === 0) {
         console.log("Inserting sample food items...");
         try {
           console.log("Food items data to insert:", JSON.stringify(typedSampleFoodItems, null, 2));
