@@ -198,4 +198,73 @@ export class MemStorage implements IStorage {
   }
 }
 
+export class DatabaseStorage implements IStorage {
+  async getFoodItems(): Promise<FoodItem[]> {
+    // TODO: Implement with Drizzle
+    const memStorage = new MemStorage();
+    return memStorage.getFoodItems();
+  }
+
+  async getFoodItem(id: number): Promise<FoodItem | undefined> {
+    // TODO: Implement with Drizzle
+    const memStorage = new MemStorage();
+    return memStorage.getFoodItem(id);
+  }
+
+  async addFoodItem(item: InsertFoodItem): Promise<FoodItem> {
+    // TODO: Implement with Drizzle
+    const memStorage = new MemStorage();
+    return memStorage.addFoodItem(item);
+  }
+
+  async updateFoodItem(id: number, item: Partial<FoodItem>): Promise<FoodItem | undefined> {
+    // TODO: Implement with Drizzle
+    const memStorage = new MemStorage();
+    return memStorage.updateFoodItem(id, item);
+  }
+
+  async deleteFoodItem(id: number): Promise<boolean> {
+    // TODO: Implement with Drizzle
+    const memStorage = new MemStorage();
+    return memStorage.deleteFoodItem(id);
+  }
+
+  async getRecipes(): Promise<Recipe[]> {
+    // TODO: Implement with Drizzle
+    const memStorage = new MemStorage();
+    return memStorage.getRecipes();
+  }
+
+  async getRecipe(id: number): Promise<Recipe | undefined> {
+    // TODO: Implement with Drizzle
+    const memStorage = new MemStorage();
+    return memStorage.getRecipe(id);
+  }
+
+  async getRecipesForIngredients(ingredients: string[]): Promise<Recipe[]> {
+    // TODO: Implement with Drizzle
+    const memStorage = new MemStorage();
+    return memStorage.getRecipesForIngredients(ingredients);
+  }
+
+  async getFoodBanks(): Promise<FoodBank[]> {
+    // TODO: Implement with Drizzle
+    const memStorage = new MemStorage();
+    return memStorage.getFoodBanks();
+  }
+
+  async getNearbyUsers(): Promise<NearbyUser[]> {
+    // TODO: Implement with Drizzle
+    const memStorage = new MemStorage();
+    return memStorage.getNearbyUsers();
+  }
+
+  async getWasteStats(): Promise<FoodWasteStats> {
+    // TODO: Implement with Drizzle
+    const memStorage = new MemStorage();
+    return memStorage.getWasteStats();
+  }
+}
+
+// For now, still use MemStorage until we implement the database version
 export const storage = new MemStorage();
