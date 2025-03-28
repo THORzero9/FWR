@@ -5,16 +5,25 @@ import { apiRequest } from "@/lib/queryClient";
 import { calculateExpiryProgress, formatRelativeDate } from "@/lib/utils/date-utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import EditItemDialog from "./edit-item-dialog";
-import { Pencil } from "lucide-react";
+import { Pencil, CheckCircle } from "lucide-react";
 
 interface ItemCardProps {
   item: FoodItem;
+  selectable?: boolean;
+  isSelected?: boolean;
+  onSelectToggle?: (item: FoodItem) => void;
 }
 
-export default function ItemCard({ item }: ItemCardProps) {
+export default function ItemCard({ 
+  item, 
+  selectable = false, 
+  isSelected = false, 
+  onSelectToggle 
+}: ItemCardProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -33,20 +42,7 @@ export default function ItemCard({ item }: ItemCardProps) {
     }
   });
   
-  // Mutation to delete item
-  const { mutate: deleteItem, isPending: isDeleting } = useMutation({
-    mutationFn: async () => {
-      return apiRequest("DELETE", `/api/food-items/${item.id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/food-items"] });
-      setDialogOpen(false);
-      toast({
-        title: "Item deleted",
-        description: `${item.name} has been removed from your inventory.`,
-      });
-    }
-  });
+  // We'll use the delete functionality from EditItemDialog
 
   // Calculate days until expiry
   const daysUntilExpiry = Math.ceil(
@@ -79,14 +75,37 @@ export default function ItemCard({ item }: ItemCardProps) {
   return (
     <>
       <div 
-        className="bg-white rounded-lg shadow p-3 cursor-pointer hover:shadow-md transition-shadow"
-        onClick={() => setDialogOpen(true)}
+        className={`bg-white rounded-lg shadow p-3 cursor-pointer hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-primary' : ''}`}
+        onClick={(e) => {
+          if (selectable && onSelectToggle) {
+            e.preventDefault();
+            onSelectToggle(item);
+          } else {
+            setDialogOpen(true);
+          }
+        }}
       >
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-2">
-            <div className="bg-primary/10 rounded-full w-7 h-7 flex items-center justify-center text-primary text-sm">
-              <span className="material-icons" style={{ fontSize: '16px' }}>{getCategoryIcon(item.category)}</span>
-            </div>
+            {selectable ? (
+              <div 
+                className={`rounded-full w-7 h-7 flex items-center justify-center transition-colors ${
+                  isSelected 
+                    ? 'bg-primary text-white' 
+                    : 'bg-gray-100 text-gray-400'
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onSelectToggle) onSelectToggle(item);
+                }}
+              >
+                {isSelected && <CheckCircle size={16} />}
+              </div>
+            ) : (
+              <div className="bg-primary/10 rounded-full w-7 h-7 flex items-center justify-center text-primary text-sm">
+                <span className="material-icons" style={{ fontSize: '16px' }}>{getCategoryIcon(item.category)}</span>
+              </div>
+            )}
             <div>
               <h3 className="font-medium">{item.name}</h3>
               <p className="text-sm text-neutral-500">{item.quantity} {item.unit}</p>
@@ -199,10 +218,12 @@ export default function ItemCard({ item }: ItemCardProps) {
             <Button 
               variant="destructive"
               className="flex-1"
-              onClick={() => deleteItem()}
-              disabled={isDeleting}
+              onClick={() => {
+                setDialogOpen(false);
+                setEditDialogOpen(true);
+              }}
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

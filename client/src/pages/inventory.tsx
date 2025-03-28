@@ -6,10 +6,11 @@ import CategoryFilter from "@/components/food/category-filter";
 import ItemCard from "@/components/food/item-card";
 import ExpiringItemCard from "@/components/food/expiring-item-card";
 import AddItemDialog from "@/components/food/add-item-dialog";
+import MultiSelectBar from "@/components/food/multi-select-bar";
 import RecipeSuggestions from "@/components/recipe/recipe-suggestions";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Check, CheckSquare } from "lucide-react";
 
 // Components for summary cards
 const SummaryCard = ({ title, value, icon, color = "text-primary" }: { 
@@ -37,6 +38,8 @@ export default function Inventory() {
   const [expiringItems, setExpiringItems] = useState<FoodItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<FoodItem[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<FoodItem[]>([]);
 
   // Calculate stats based on food items
   const calculateStats = () => {
@@ -63,6 +66,32 @@ export default function Inventory() {
   };
 
   const stats = calculateStats();
+  
+  // Toggle selection mode
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    // Clear selection when exiting selection mode
+    if (isSelectionMode) {
+      setSelectedItems([]);
+    }
+  };
+  
+  // Toggle item selection
+  const toggleItemSelection = (item: FoodItem) => {
+    setSelectedItems(prev => {
+      const isSelected = prev.some(i => i.id === item.id);
+      if (isSelected) {
+        return prev.filter(i => i.id !== item.id);
+      } else {
+        return [...prev, item];
+      }
+    });
+  };
+  
+  // Clear selection
+  const clearSelection = () => {
+    setSelectedItems([]);
+  };
 
   useEffect(() => {
     if (!foodItems) return;
@@ -153,20 +182,37 @@ export default function Inventory() {
       {/* Inventory Section */}
       <div className="flex justify-between items-center mb-3">
         <h2 className="text-lg font-medium">My Inventory</h2>
-        <Button
-          onClick={() => setIsAddDialogOpen(true)}
-          className="bg-primary hover:bg-primary/90 flex items-center gap-1"
-          size="sm"
-        >
-          <Plus size={16} />
-          Add Item
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={toggleSelectionMode}
+            className={`flex items-center gap-1 ${isSelectionMode ? 'bg-primary/20 hover:bg-primary/30 text-primary' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
+            variant="outline"
+            size="sm"
+          >
+            <CheckSquare size={16} />
+            {isSelectionMode ? 'Exit Selection' : 'Select'}
+          </Button>
+          <Button
+            onClick={() => setIsAddDialogOpen(true)}
+            className="bg-primary hover:bg-primary/90 flex items-center gap-1"
+            size="sm"
+          >
+            <Plus size={16} />
+            Add Item
+          </Button>
+        </div>
       </div>
       
       {filteredItems.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pb-20">
           {filteredItems.map(item => (
-            <ItemCard key={item.id} item={item} />
+            <ItemCard 
+              key={item.id} 
+              item={item} 
+              selectable={isSelectionMode}
+              isSelected={selectedItems.some(i => i.id === item.id)}
+              onSelectToggle={toggleItemSelection}
+            />
           ))}
         </div>
       ) : (
@@ -180,6 +226,14 @@ export default function Inventory() {
             Add items to start tracking your food.
           </p>
         </div>
+      )}
+      
+      {/* Multi-Select Bar */}
+      {isSelectionMode && selectedItems.length > 0 && (
+        <MultiSelectBar
+          selectedItems={selectedItems}
+          onClearSelection={clearSelection}
+        />
       )}
       
       {/* Add Item Dialog */}
