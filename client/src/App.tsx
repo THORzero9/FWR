@@ -31,10 +31,11 @@ function App() {
 
       {/* Floating Action Button */}
       <button 
-        className="fixed z-20 bottom-20 right-5 bg-primary text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg"
+        className="fixed z-20 bottom-24 right-5 bg-primary text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
         onClick={() => setIsAddDialogOpen(true)}
+        aria-label="Add food item"
       >
-        <span className="material-icons">add</span>
+        <span className="material-icons text-2xl">add</span>
       </button>
 
       <BottomNav />

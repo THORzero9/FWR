@@ -57,6 +57,7 @@ export default function AddItemDialog({ open, onOpenChange }: AddItemDialogProps
   });
   
   const onSubmit = (data: any) => {
+    console.log("Submitting form data:", data);
     addItem(data);
   };
 

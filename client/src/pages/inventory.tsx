@@ -93,7 +93,7 @@ export default function Inventory() {
   return (
     <div className="px-4 py-5">
       {/* Summary Cards */}
-      <div className="flex space-x-4 mb-6 overflow-x-auto pb-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <SummaryCard 
           title="Items" 
           value={stats.totalItems} 
@@ -141,7 +141,7 @@ export default function Inventory() {
       {/* Inventory Section */}
       <h2 className="text-lg font-medium mb-3">My Inventory</h2>
       {filteredItems.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {filteredItems.map(item => (
             <ItemCard key={item.id} item={item} />
           ))}

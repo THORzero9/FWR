@@ -41,16 +41,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST a new food item
   apiRouter.post("/food-items", async (req, res) => {
     try {
+      console.log("Received POST request to /api/food-items with data:", req.body);
       const validationResult = insertFoodItemSchema.safeParse(req.body);
       
       if (!validationResult.success) {
         const errorMessage = fromZodError(validationResult.error).message;
+        console.log("Validation error:", errorMessage);
         return res.status(400).json({ message: errorMessage });
       }
       
       const newItem = await storage.addFoodItem(validationResult.data);
+      console.log("Successfully added new food item:", newItem);
       res.status(201).json(newItem);
     } catch (error) {
+      console.error("Error creating food item:", error);
       res.status(500).json({ message: "Error creating food item" });
     }
   });
@@ -105,6 +109,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // GET recipes for ingredients - Order matters! This needs to come before the /:id route
+  apiRouter.get("/recipes/match/:ingredients", async (req, res) => {
+    try {
+      const ingredients = req.params.ingredients.split(",");
+      console.log("Finding recipes for ingredients:", ingredients);
+      const recipes = await storage.getRecipesForIngredients(ingredients);
+      res.json(recipes);
+    } catch (error) {
+      console.error("Error finding recipes for ingredients:", error);
+      res.status(500).json({ message: "Error finding recipes for ingredients" });
+    }
+  });
+  
   // GET a specific recipe
   apiRouter.get("/recipes/:id", async (req, res) => {
     try {
@@ -121,17 +138,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(recipe);
     } catch (error) {
       res.status(500).json({ message: "Error fetching recipe" });
-    }
-  });
-  
-  // GET recipes for ingredients
-  apiRouter.get("/recipes/match/:ingredients", async (req, res) => {
-    try {
-      const ingredients = req.params.ingredients.split(",");
-      const recipes = await storage.getRecipesForIngredients(ingredients);
-      res.json(recipes);
-    } catch (error) {
-      res.status(500).json({ message: "Error finding recipes for ingredients" });
     }
   });
   
