@@ -3,8 +3,11 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertFoodItemSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication routes and middleware
+  setupAuth(app);
   const apiRouter = express.Router();
   
   // Food Items API
@@ -177,70 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Auth API (Mock implementation for frontend development)
-  
-  // GET current user
-  apiRouter.get("/user", (req, res) => {
-    // This would normally check session/JWT
-    // For demo purposes, we'll mock a logged-in user
-    const mockUser = {
-      id: 1,
-      username: "admin",
-      email: "admin@example.com"
-    };
-    
-    res.json(mockUser);
-  });
-  
-  // POST login
-  apiRouter.post("/login", (req, res) => {
-    try {
-      const { username, password } = req.body;
-      
-      // Demo validation
-      if (!username || !password) {
-        return res.status(400).json({ message: "Username and password required" });
-      }
-      
-      // In a real app, you would verify credentials against the database
-      // For now, mock a successful login
-      res.json({
-        id: 1,
-        username,
-        email: `${username}@example.com`
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Error during login" });
-    }
-  });
-  
-  // POST register
-  apiRouter.post("/register", (req, res) => {
-    try {
-      const { username, email, password } = req.body;
-      
-      // Demo validation
-      if (!username || !email || !password) {
-        return res.status(400).json({ message: "All fields are required" });
-      }
-      
-      // In a real app, you would create a user in the database
-      // For now, mock a successful registration
-      res.status(201).json({
-        id: 1,
-        username,
-        email
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Error during registration" });
-    }
-  });
-  
-  // POST logout
-  apiRouter.post("/logout", (req, res) => {
-    // In a real app, you would destroy the session
-    res.status(200).json({ message: "Logged out successfully" });
-  });
+  // Auth API is now handled by setupAuth() in auth.ts
   
   // Register API routes
   app.use("/api", apiRouter);

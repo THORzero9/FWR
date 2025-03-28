@@ -9,7 +9,14 @@ import { sampleFoodBanks } from "./data/food-banks";
 import { sampleNearbyUsers } from "./data/users";
 import { sampleFoodItems } from "./data/food-items";
 
-// Interface for storage operations
+// Import session packages
+import session from "express-session";
+import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+
+const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
+
 export interface IStorage {
   // Food items
   getFoodItems(): Promise<FoodItem[]>;
@@ -31,6 +38,14 @@ export interface IStorage {
   
   // Stats
   getWasteStats(): Promise<FoodWasteStats>;
+  
+  // Sessions storage
+  sessionStore: session.Store;
+  
+  // Users
+  getUser(id: number): Promise<any | undefined>;
+  getUserByUsername(username: string): Promise<any | undefined>;
+  createUser(user: any): Promise<any>;
 }
 
 // In-memory storage implementation
@@ -39,23 +54,41 @@ export class MemStorage implements IStorage {
   private recipes: Map<number, Recipe>;
   private foodBanks: Map<number, FoodBank>;
   private nearbyUsers: Map<number, NearbyUser>;
+  private users: Map<number, any>;
   private currentFoodItemId: number;
   private currentRecipeId: number;
   private currentFoodBankId: number;
   private currentNearbyUserId: number;
+  private currentUserId: number;
+  public sessionStore: session.Store;
   
   constructor() {
     this.foodItems = new Map();
     this.recipes = new Map();
     this.foodBanks = new Map();
     this.nearbyUsers = new Map();
+    this.users = new Map();
     this.currentFoodItemId = 1;
     this.currentRecipeId = 1;
     this.currentFoodBankId = 1;
     this.currentNearbyUserId = 1;
+    this.currentUserId = 1;
+    
+    // Create session store
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
     
     // Initialize with sample data
     this.initializeWithSampleData();
+    
+    // Add a default user
+    this.users.set(1, {
+      id: 1,
+      username: "admin",
+      email: "admin@example.com",
+      password: "password"
+    });
   }
   
   private initializeWithSampleData() {
@@ -187,6 +220,26 @@ export class MemStorage implements IStorage {
         { category: "Grains", percentage: 10 },
       ],
     };
+  }
+  
+  // User management methods
+  async getUser(id: number): Promise<any | undefined> {
+    return this.users.get(id);
+  }
+  
+  async getUserByUsername(username: string): Promise<any | undefined> {
+    return Array.from(this.users.values()).find(
+      user => user.username === username
+    );
+  }
+  
+  async createUser(userData: any): Promise<any> {
+    const newUser = {
+      id: this.currentUserId++,
+      ...userData
+    };
+    this.users.set(newUser.id, newUser);
+    return newUser;
   }
 }
 
@@ -411,8 +464,18 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
+  public sessionStore: session.Store;
+  
   constructor() {
     console.log("DatabaseStorage constructor called");
+    
+    // Initialize PostgreSQL session store
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      tableName: 'session',
+      createTableIfMissing: true,
+      pruneSessionInterval: 60 * 15 // 15 minutes
+    });
     
     // Add a small delay to ensure database connection is fully established
     setTimeout(() => {
@@ -516,6 +579,62 @@ export class DatabaseStorage implements IStorage {
         { category: "Grains", percentage: 10 },
       ],
     };
+  }
+  
+  // User management methods for authentication
+  async getUser(id: number): Promise<any | undefined> {
+    try {
+      // For now we're mocking this until we add a users table
+      if (id === 1) {
+        return {
+          id: 1,
+          username: "admin",
+          email: "admin@example.com"
+        };
+      }
+      return undefined;
+    } catch (error) {
+      console.error("Error getting user:", error);
+      return undefined;
+    }
+  }
+  
+  async getUserByUsername(username: string): Promise<any | undefined> {
+    try {
+      // For now we're mocking this until we add a users table
+      if (username === "admin") {
+        return {
+          id: 1,
+          username: "admin",
+          email: "admin@example.com",
+          password: "password" // In a real app, this would be hashed
+        };
+      }
+      // For demo purposes, accept any username
+      return {
+        id: 1,
+        username: username,
+        email: `${username}@example.com`,
+        password: "password" 
+      };
+    } catch (error) {
+      console.error("Error getting user by username:", error);
+      return undefined;
+    }
+  }
+  
+  async createUser(userData: any): Promise<any> {
+    try {
+      // For now we're mocking this until we add a users table
+      return {
+        id: 1,
+        username: userData.username,
+        email: userData.email
+      };
+    } catch (error) {
+      console.error("Error creating user:", error);
+      throw error;
+    }
   }
 }
 
