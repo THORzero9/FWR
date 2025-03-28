@@ -5,7 +5,10 @@ import { useFoodItems } from "@/hooks/use-food-items";
 import CategoryFilter from "@/components/food/category-filter";
 import ItemCard from "@/components/food/item-card";
 import ExpiringItemCard from "@/components/food/expiring-item-card";
+import AddItemDialog from "@/components/food/add-item-dialog";
 import { formatDistanceToNow } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 // Components for summary cards
 const SummaryCard = ({ title, value, icon, color = "text-primary" }: { 
@@ -32,6 +35,7 @@ export default function Inventory() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [expiringItems, setExpiringItems] = useState<FoodItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<FoodItem[]>([]);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   // Calculate stats based on food items
   const calculateStats = () => {
@@ -139,7 +143,18 @@ export default function Inventory() {
       </div>
 
       {/* Inventory Section */}
-      <h2 className="text-lg font-medium mb-3">My Inventory</h2>
+      <div className="flex justify-between items-center mb-3">
+        <h2 className="text-lg font-medium">My Inventory</h2>
+        <Button
+          onClick={() => setIsAddDialogOpen(true)}
+          className="bg-primary hover:bg-primary/90 flex items-center gap-1"
+          size="sm"
+        >
+          <Plus size={16} />
+          Add Item
+        </Button>
+      </div>
+      
       {filteredItems.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {filteredItems.map(item => (
@@ -158,6 +173,12 @@ export default function Inventory() {
           </p>
         </div>
       )}
+      
+      {/* Add Item Dialog */}
+      <AddItemDialog 
+        open={isAddDialogOpen} 
+        onOpenChange={setIsAddDialogOpen} 
+      />
     </div>
   );
 }
