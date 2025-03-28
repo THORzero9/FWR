@@ -63,14 +63,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null, Error>({
     queryKey: ["/api/user"],
     queryFn: async () => {
+      console.log("Fetching user data, storedUser:", storedUser);
+      
       // If we have a stored user, use that instead of making a network request
-      if (storedUser) return storedUser;
+      if (storedUser) {
+        console.log("Using stored user:", storedUser);
+        return storedUser;
+      }
       
       try {
-        const res = await apiRequest("GET", "/api/user");
-        if (res.status === 401) return null;
-        return await res.json();
+        console.log("Making API request to /api/user");
+        const res = await fetch("/api/user", {
+          credentials: "include",
+        });
+        
+        console.log("API response status:", res.status);
+        
+        if (res.status === 401) {
+          console.log("User not authenticated");
+          return null;
+        }
+        
+        const userData = await res.json();
+        console.log("User data from API:", userData);
+        return userData;
       } catch (e) {
+        console.error("Error fetching user:", e);
         return null;
       }
     },
@@ -79,23 +97,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      // For demo purposes, just simulate login response
-      // In a real app, you would make a real API call
-      return new Promise<User>((resolve) => {
-        setTimeout(() => {
-          const mockUser = {
-            id: 1,
-            username: credentials.username,
-            email: `${credentials.username}@example.com`,
-          };
-          
-          // Store in localStorage for persistence
-          localStorage.setItem(AUTH_KEY, JSON.stringify(mockUser));
-          setStoredUser(mockUser);
-          
-          resolve(mockUser);
-        }, 500);
-      });
+      console.log("Login mutation called with:", credentials);
+      try {
+        // Use the actual API
+        const res = await apiRequest("POST", "/api/login", credentials);
+        const userData = await res.json();
+        console.log("Login response:", userData);
+        
+        // Store in localStorage for persistence
+        localStorage.setItem(AUTH_KEY, JSON.stringify(userData));
+        setStoredUser(userData);
+        
+        return userData;
+      } catch (error) {
+        console.error("Login error:", error);
+        throw error;
+      }
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -115,23 +132,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
-      // For demo purposes, just simulate registration response
-      // In a real app, you would make a real API call
-      return new Promise<User>((resolve) => {
-        setTimeout(() => {
-          const mockUser = {
-            id: 1,
-            username: credentials.username,
-            email: credentials.email,
-          };
-          
-          // Store in localStorage for persistence
-          localStorage.setItem(AUTH_KEY, JSON.stringify(mockUser));
-          setStoredUser(mockUser);
-          
-          resolve(mockUser);
-        }, 500);
-      });
+      console.log("Register mutation called with:", credentials);
+      try {
+        // Use the actual API
+        const res = await apiRequest("POST", "/api/register", credentials);
+        const userData = await res.json();
+        console.log("Register response:", userData);
+        
+        // Store in localStorage for persistence
+        localStorage.setItem(AUTH_KEY, JSON.stringify(userData));
+        setStoredUser(userData);
+        
+        return userData;
+      } catch (error) {
+        console.error("Register error:", error);
+        throw error;
+      }
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -151,15 +167,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // For demo purposes, just clear local storage
-      // In a real app, you would make a real API call
-      return new Promise<void>((resolve) => {
-        setTimeout(() => {
-          localStorage.removeItem(AUTH_KEY);
-          setStoredUser(null);
-          resolve();
-        }, 500);
-      });
+      console.log("Logout mutation called");
+      try {
+        // Use the actual API
+        await apiRequest("POST", "/api/logout");
+        
+        // Clear localStorage
+        localStorage.removeItem(AUTH_KEY);
+        setStoredUser(null);
+      } catch (error) {
+        console.error("Logout error:", error);
+        // Even if the API call fails, clear the local storage
+        localStorage.removeItem(AUTH_KEY);
+        setStoredUser(null);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);

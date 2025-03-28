@@ -39,7 +39,9 @@ export default function AuthPage() {
   
   // Redirect if already logged in
   useEffect(() => {
+    console.log("Auth state:", { user });
     if (user) {
+      console.log("User is logged in, redirecting to home");
       setLocation("/");
     }
   }, [user, setLocation]);

@@ -1,10 +1,10 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import Header from "@/components/layout/header";
 import BottomNav from "@/components/layout/bottom-nav";
 import { useState } from "react";
 import AddItemDialog from "@/components/food/add-item-dialog";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 // Pages
@@ -17,6 +17,11 @@ import AuthPage from "@/pages/auth-page";
 
 function AppRouter() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const { user } = useAuth();
+  const [location] = useLocation();
+  
+  // Only show FAB and nav in authenticated routes (not on auth page)
+  const showAuthenticatedUI = user && location !== "/auth";
 
   return (
     <div className="min-h-screen bg-neutral-50 flex flex-col">
@@ -33,16 +38,19 @@ function AppRouter() {
         </Switch>
       </main>
 
-      {/* Floating Action Button */}
-      <button 
-        className="fixed z-20 bottom-24 right-5 bg-primary text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
-        onClick={() => setIsAddDialogOpen(true)}
-        aria-label="Add food item"
-      >
-        <span className="material-icons text-2xl">add</span>
-      </button>
+      {/* Floating Action Button - only show when authenticated */}
+      {showAuthenticatedUI && (
+        <button 
+          className="fixed z-20 bottom-24 right-5 bg-primary text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
+          onClick={() => setIsAddDialogOpen(true)}
+          aria-label="Add food item"
+        >
+          <span className="material-icons text-2xl">add</span>
+        </button>
+      )}
 
-      <BottomNav />
+      {/* Bottom Nav - only show when authenticated */}
+      {showAuthenticatedUI && <BottomNav />}
       
       <AddItemDialog 
         open={isAddDialogOpen} 

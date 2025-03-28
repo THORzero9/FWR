@@ -182,8 +182,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET current user
   apiRouter.get("/user", (req, res) => {
     // This would normally check session/JWT
-    // For demo purposes, it will just return a 401 for the frontend to handle
-    res.status(401).json({ message: "Not authenticated" });
+    // For demo purposes, we'll mock a logged-in user
+    const mockUser = {
+      id: 1,
+      username: "admin",
+      email: "admin@example.com"
+    };
+    
+    res.json(mockUser);
   });
   
   // POST login
