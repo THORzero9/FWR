@@ -7,6 +7,7 @@ import { eq, like, asc, desc, sql } from "drizzle-orm";
 import { sampleRecipes } from "./data/recipes";
 import { sampleFoodBanks } from "./data/food-banks";
 import { sampleNearbyUsers } from "./data/users";
+import { sampleFoodItems } from "./data/food-items";
 
 // Interface for storage operations
 export interface IStorage {
@@ -83,6 +84,16 @@ export class MemStorage implements IStorage {
         ...userData
       };
       this.nearbyUsers.set(user.id, user);
+    }
+    
+    // Add sample food items
+    for (const itemData of sampleFoodItems) {
+      const item: FoodItem = {
+        id: this.currentFoodItemId++,
+        addedDate: new Date(),
+        ...itemData
+      };
+      this.foodItems.set(item.id, item);
     }
   }
   
@@ -202,6 +213,17 @@ const typedSampleRecipes = sampleRecipes.map(recipe => ({
   ingredients: recipe.ingredients,
   instructions: recipe.instructions,
   rating: recipe.rating
+}));
+
+// Ensure food items have the proper format for database insertion
+const typedSampleFoodItems = sampleFoodItems.map(item => ({
+  name: item.name,
+  category: item.category,
+  quantity: item.quantity,
+  unit: item.unit,
+  expiryDate: item.expiryDate,
+  favorite: item.favorite,
+  addedDate: new Date() // Add the current date as the added date
 }));
 
 // PostgreSQL database storage implementation
@@ -332,6 +354,46 @@ export class DatabaseStorage implements IStorage {
           }
         } catch (err) {
           console.error("Error inserting recipes:", err);
+        }
+      }
+      
+      if (foodItemsCount[0]?.count === 0) {
+        console.log("Inserting sample food items...");
+        try {
+          console.log("Food items data to insert:", JSON.stringify(typedSampleFoodItems, null, 2));
+          
+          // Try direct SQL insertion for troubleshooting
+          const client = await pool.connect();
+          try {
+            await client.query('BEGIN');
+            
+            for (const item of typedSampleFoodItems) {
+              const result = await client.query(
+                'INSERT INTO food_items (name, category, quantity, unit, expiry_date, favorite, added_date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+                [
+                  item.name,
+                  item.category,
+                  item.quantity,
+                  item.unit,
+                  item.expiryDate,
+                  item.favorite,
+                  item.addedDate
+                ]
+              );
+              console.log(`Inserted food item with ID: ${result.rows[0].id}`);
+            }
+            
+            await client.query('COMMIT');
+            console.log("Successfully inserted all food items via direct SQL");
+          } catch (sqlErr: any) {
+            await client.query('ROLLBACK');
+            console.error("SQL Error inserting food items:", sqlErr);
+            console.error("Detailed error:", sqlErr.stack);
+          } finally {
+            client.release();
+          }
+        } catch (err) {
+          console.error("Error inserting food items:", err);
         }
       }
       
