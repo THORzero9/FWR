@@ -75,7 +75,13 @@ export default function ItemCard({
   return (
     <>
       <div 
-        className={`bg-white rounded-lg shadow p-3 cursor-pointer hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-primary' : ''}`}
+        className={`bg-white rounded-lg shadow p-3 cursor-pointer hover:shadow-md transition-all ${
+          isSelected 
+            ? 'ring-2 ring-primary border-primary bg-primary/5' 
+            : selectable 
+              ? 'hover:border-gray-200 border border-transparent' 
+              : ''
+        }`}
         onClick={(e) => {
           if (selectable && onSelectToggle) {
             e.preventDefault();

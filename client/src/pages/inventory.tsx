@@ -69,24 +69,41 @@ export default function Inventory() {
   
   // Toggle selection mode
   const toggleSelectionMode = () => {
-    setIsSelectionMode(!isSelectionMode);
+    const newMode = !isSelectionMode;
+    setIsSelectionMode(newMode);
+    
     // Clear selection when exiting selection mode
-    if (isSelectionMode) {
+    if (!newMode) {
       setSelectedItems([]);
     }
+    
+    // Log selection state for debugging
+    console.log(`Selection mode: ${newMode ? 'ON' : 'OFF'}`);
   };
   
   // Toggle item selection
   const toggleItemSelection = (item: FoodItem) => {
     setSelectedItems(prev => {
       const isSelected = prev.some(i => i.id === item.id);
-      if (isSelected) {
-        return prev.filter(i => i.id !== item.id);
-      } else {
-        return [...prev, item];
-      }
+      const newSelection = isSelected
+        ? prev.filter(i => i.id !== item.id)
+        : [...prev, item];
+        
+      // Log for debugging
+      console.log(`Item ${item.id} (${item.name}) ${isSelected ? 'deselected' : 'selected'}`);
+      console.log(`Selected items count: ${newSelection.length}`);
+      
+      return newSelection;
     });
   };
+  
+  // Effect to log when selected items changes
+  useEffect(() => {
+    if (selectedItems.length > 0) {
+      console.log(`Selection updated: ${selectedItems.length} items selected`);
+      selectedItems.forEach(item => console.log(`- ${item.name} (ID: ${item.id})`));
+    }
+  }, [selectedItems]);
   
   // Clear selection
   const clearSelection = () => {

@@ -99,7 +99,7 @@ export default function MultiSelectBar({ selectedItems, onClearSelection }: Mult
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md p-3 flex items-center gap-2 z-10">
+      <div className="fixed bottom-0 left-0 right-0 bg-primary/5 backdrop-blur-sm border-t border-primary/30 shadow-lg p-4 flex items-center gap-3 z-50">
         <div className="flex-1 flex items-center gap-2">
           <Button
             variant="outline" 
