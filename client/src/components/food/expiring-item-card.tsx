@@ -10,6 +10,7 @@ import { useRecipes } from "@/hooks/use-recipes";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 
 interface ExpiringItemCardProps {
   item: FoodItem;
@@ -54,9 +55,9 @@ export default function ExpiringItemCard({ item }: ExpiringItemCardProps) {
   
   // Get expiry text
   const getExpiryText = () => {
-    if (daysUntilExpiry <= 0) return "Expired!";
-    if (daysUntilExpiry === 1) return "Expires tomorrow";
+    if (daysUntilExpiry < 0) return "Expired!";
     if (daysUntilExpiry === 0) return "Expires today!";
+    if (daysUntilExpiry === 1) return "Expires tomorrow";
     return `Expires in ${daysUntilExpiry} days`;
   };
   
@@ -135,14 +136,16 @@ export default function ExpiringItemCard({ item }: ExpiringItemCardProps) {
           </div>
         </div>
         <div className="mt-3 flex justify-between">
-          <button 
-            className="text-blue-600 text-sm font-medium flex items-center"
-            disabled={matchingRecipes.length === 0}
-            onClick={() => window.location.href = "/recipes"}
-          >
-            <span className="material-icons text-sm mr-1">restaurant</span> 
-            {matchingRecipes.length > 0 ? 'Recipes' : 'No Recipes'}
-          </button>
+          <Link href="/recipes">
+            <div 
+              className={`text-sm font-medium flex items-center ${
+                matchingRecipes.length > 0 ? 'text-blue-600 cursor-pointer' : 'text-neutral-400'
+              }`}
+            >
+              <span className="material-icons text-sm mr-1">restaurant</span> 
+              {matchingRecipes.length > 0 ? 'Recipes' : 'No Recipes'}
+            </div>
+          </Link>
           <button 
             className="text-primary text-sm font-medium flex items-center"
             onClick={handleShare}

@@ -72,6 +72,11 @@ export const nearbyUsers = pgTable("nearby_users", {
 export const insertFoodItemSchema = createInsertSchema(foodItems).omit({
   id: true,
   addedDate: true,
+}).extend({
+  // Override the expiryDate field to accept strings as well as Date objects
+  expiryDate: z.union([z.string(), z.date()]).transform(val => 
+    typeof val === 'string' ? new Date(val) : val
+  ),
 });
 
 export const insertRecipeSchema = createInsertSchema(recipes).omit({

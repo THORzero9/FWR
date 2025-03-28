@@ -58,7 +58,15 @@ export default function AddItemDialog({ open, onOpenChange }: AddItemDialogProps
   
   const onSubmit = (data: any) => {
     console.log("Submitting form data:", data);
-    addItem(data);
+    // Ensure expiryDate is properly formatted as ISO string
+    const formattedData = {
+      ...data,
+      expiryDate: data.expiryDate instanceof Date 
+        ? data.expiryDate.toISOString() 
+        : new Date(data.expiryDate).toISOString()
+    };
+    console.log("Sending formatted data:", formattedData);
+    addItem(formattedData);
   };
 
   const handleCancel = () => {

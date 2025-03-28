@@ -21,14 +21,14 @@ export default function BottomNav() {
       <div className="flex justify-around items-center h-16">
         {navItems.map((item) => (
           <Link key={item.path} href={item.path}>
-            <a
+            <div
               className={`flex flex-col items-center justify-center w-full h-full ${
                 location === item.path ? "text-primary" : "text-neutral-500"
-              }`}
+              } cursor-pointer`}
             >
               <span className="material-icons">{item.icon}</span>
               <span className="text-xs mt-1">{item.label}</span>
-            </a>
+            </div>
           </Link>
         ))}
       </div>
