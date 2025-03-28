@@ -251,7 +251,8 @@ export class DatabaseStorage implements IStorage {
       console.log("Food items count value:", Number(foodItemsCount[0]?.count));
       
       // Initialize with sample data if empty
-      if (foodBanksCount[0]?.count === 0) {
+      // Explicitly convert to number to ensure proper comparison
+      if (Number(foodBanksCount[0]?.count) === 0) {
         console.log("Inserting sample food banks...");
         try {
           console.log("Food banks data to insert:", JSON.stringify(typedSampleFoodBanks, null, 2));
@@ -283,7 +284,8 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      if (nearbyUsersCount[0]?.count === 0) {
+      // Explicitly convert to number to ensure proper comparison
+      if (Number(nearbyUsersCount[0]?.count) === 0) {
         console.log("Inserting sample nearby users...");
         try {
           console.log("Nearby users data to insert:", JSON.stringify(typedSampleNearbyUsers, null, 2));
@@ -315,7 +317,8 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      if (recipesCount[0]?.count === 0) {
+      // Explicitly convert to number to ensure proper comparison
+      if (Number(recipesCount[0]?.count) === 0) {
         console.log("Inserting sample recipes...");
         try {
           console.log("Recipes data to insert:", JSON.stringify(typedSampleRecipes, null, 2));
