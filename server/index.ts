@@ -1,8 +1,9 @@
 import express, { type Request, Response, NextFunction, type Express } from "express";
 import http from 'http'; // Import http
+import logger from './logger'; // Import the structured logger
 import { registerRoutes } from "./routes";
 import { setupAuth } from "./auth"; // Import setupAuth
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, serveStatic } from "./vite"; // Removed log from here
 
 export async function createApp(): Promise<{ app: Express, server: http.Server }> {
   const app = express();
@@ -12,11 +13,28 @@ export async function createApp(): Promise<{ app: Express, server: http.Server }
   // Request logging middleware (simplified for brevity in refactor diff)
   app.use((req, res, next) => {
     const start = Date.now();
+    // Add request ID (simple example, could use a library like express-request-id)
+    const requestId = Math.random().toString(36).substring(2, 15);
+    // @ts-ignore
+    req.id = requestId; // Attach to request for downstream logging
+
+    logger.info({
+      requestId,
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+    }, `Incoming request to ${req.method} ${req.originalUrl}`);
+
     res.on("finish", () => {
-      if (req.path.startsWith("/api")) {
-        const duration = Date.now() - start;
-        log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
-      }
+      const duration = Date.now() - start;
+      logger.info({
+        requestId,
+        method: req.method,
+        url: req.originalUrl,
+        statusCode: res.statusCode,
+        durationMs: duration,
+      }, `Finished request to ${req.method} ${req.originalUrl} with status ${res.statusCode} in ${duration}ms`);
     });
     next();
   });
@@ -27,11 +45,32 @@ export async function createApp(): Promise<{ app: Express, server: http.Server }
   // Then register other application routes (which might include protected routes)
   const server = await registerRoutes(app); // registerRoutes likely creates/returns an http.Server and adds other routes
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    res.status(status).json({ message });
-    console.error("Unhandled error in middleware:", err); 
+    const isProduction = process.env.NODE_ENV === 'production';
+    // @ts-ignore
+    const requestId = req.id;
+
+    let responseMessage = "Internal Server Error. Please try again later.";
+    if (!isProduction && err.message) {
+        responseMessage = err.message; // Show detailed message in dev
+    }
+    // For specific operational errors we trust, we might allow their messages in prod
+    if (status < 500 && err.message) {
+        responseMessage = err.message;
+    }
+
+    logger.error({
+        requestId,
+        status,
+        message: err.message, // Log original error message
+        path: req.path,
+        method: req.method,
+        stack: err.stack,
+        // details: err.details // If we add a details field to our custom errors
+    }, `Unhandled error: ${err.message}`);
+    
+    res.status(status).json({ message: responseMessage });
   });
 
   // Vite/static serving setup should typically come after all routes are defined
@@ -54,11 +93,11 @@ async function main() {
       host: "0.0.0.0",
       reusePort: true,
     }, () => {
-      log(`serving on port ${port}`);
+      logger.info(`Server listening on port ${port}`);
     });
-  } catch (error) {
-    log(`Error starting server: ${error}`, "express");
-    console.error(error);
+  } catch (error: any) {
+    logger.fatal({ err: error, stack: error.stack }, "Failed to start server");
+    // console.error(error); // Replaced by logger.fatal
   }
 }
 

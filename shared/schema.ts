@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm"; // Import relations
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -22,9 +23,20 @@ export const FOOD_UNITS = [
   "cup(s)"
 ] as const;
 
+// Users table
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").unique().notNull(),
+  email: text("email").unique().notNull(),
+  hashedPassword: text("hashed_password").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Main food item table
 export const foodItems = pgTable("food_items", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: text("name").notNull(),
   category: text("category")
     .notNull()
@@ -37,6 +49,19 @@ export const foodItems = pgTable("food_items", {
   favorite: boolean("favorite").default(false),
   addedDate: timestamp("added_date").defaultNow().notNull(),
 });
+
+// Define relations after all tables are defined
+export const usersRelations = relations(users, ({ many }) => ({
+  foodItems: many(foodItems),
+}));
+
+export const foodItemsRelations = relations(foodItems, ({ one }) => ({
+  user: one(users, {
+    fields: [foodItems.userId],
+    references: [users.id],
+  }),
+}));
+
 
 // Recipes table
 export const recipes = pgTable("recipes", {
@@ -72,6 +97,11 @@ export const nearbyUsers = pgTable("nearby_users", {
 export const insertFoodItemSchema = createInsertSchema(foodItems).omit({
   id: true,
   addedDate: true,
+  // userId will be set by the server based on authenticated user, not client input for creation
+  // However, for validation purposes, if we were to include it from client, it should be here.
+  // For now, let's assume userId is handled server-side and not part of direct client insert schema.
+  // If it needs to be part of the Zod schema for some reason, it would be:
+  // userId: z.number().int().positive(), 
 }).extend({
   // Override the expiryDate field to accept strings as well as Date objects
   expiryDate: z.union([z.string(), z.date()]).transform(val => 
@@ -103,6 +133,11 @@ export type InsertFoodBank = z.infer<typeof insertFoodBankSchema>;
 
 export type NearbyUser = typeof nearbyUsers.$inferSelect;
 export type InsertNearbyUser = z.infer<typeof insertNearbyUserSchema>;
+
+// User types
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+
 
 // Food waste statistics type
 export type FoodWasteStats = {
