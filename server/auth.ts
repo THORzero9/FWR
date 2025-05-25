@@ -2,9 +2,8 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
 import { storage } from "./storage";
+import { hashPassword, comparePasswords } from "./crypto.utils"; // Import from crypto.utils
 
 // For TypeScript type augmentation
 declare global {
@@ -17,21 +16,7 @@ declare global {
   }
 }
 
-const scryptAsync = promisify(scrypt);
-
-// Password hashing functions
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
-}
-
-async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
-}
+// Password hashing functions (hashPassword, comparePasswords) are now imported from crypto.utils.ts
 
 export function setupAuth(app: Express) {
   // Configure session settings
@@ -42,6 +27,7 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       secure: process.env.NODE_ENV === "production",
+      httpOnly: true, // Make cookie HttpOnly
       maxAge: 24 * 60 * 60 * 1000, // 1 day by default
     }
   };
@@ -55,8 +41,6 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
-        // For demo purposes, we're accepting any username/password
-        // In a real app, you would validate against a real database
         const user = await storage.getUserByUsername(username);
         
         if (!user) {
@@ -64,13 +48,18 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Invalid username or password" });
         }
         
-        // For demo purposes, we're accepting any password 
-        // In a real app, you would validate the password
-        // if (!(await comparePasswords(password, user.password))) {
-        //   return done(null, false, { message: "Invalid username or password" });
-        // }
+        if (!user.hashedPassword) { // Check for hashedPassword existence
+          console.error(`User ${username} has no hashedPassword defined.`);
+          return done(null, false, { message: "Invalid username or password" });
+        }
+
+        if (!(await comparePasswords(password, user.hashedPassword))) {
+          return done(null, false, { message: "Invalid username or password" });
+        }
         
-        return done(null, user);
+        // Exclude hashedPassword from the user object passed to done
+        const { hashedPassword, ...userWithoutPassword } = user;
+        return done(null, userWithoutPassword);
       } catch (err) {
         return done(err);
       }
@@ -107,14 +96,13 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Username already exists" });
       }
 
-      // In a real app, you would hash the password
-      // const hashedPassword = await hashPassword(password);
+      const hashedPassword = await hashPassword(password);
       
       // Create user
       const user = await storage.createUser({
         username,
         email,
-        password: password, // In a real app, use hashedPassword
+        hashedPassword: hashedPassword,
       });
 
       // Set session cookie expiration based on "remember me" option
