@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState, useEffect } from "react";
+import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
   useMutation,
@@ -34,96 +34,79 @@ type AuthContextType = {
   registerMutation: UseMutationResult<User, Error, RegisterData>;
 };
 
-// For demo purposes, we'll use localStorage for persistence
-// In a real app, we would use secure cookies or tokens managed by the server
-const AUTH_KEY = "freshsave_auth";
+// AUTH_KEY constant removed - no more localStorage
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const [storedUser, setStoredUser] = useState<User | null>(null);
-  
-  // Initialize from localStorage
-  useEffect(() => {
-    const savedAuth = localStorage.getItem(AUTH_KEY);
-    if (savedAuth) {
-      try {
-        setStoredUser(JSON.parse(savedAuth));
-      } catch (e) {
-        localStorage.removeItem(AUTH_KEY);
-      }
-    }
-  }, []);
+  // storedUser state and associated useEffect removed
   
   const {
     data: user,
     error,
     isLoading,
-    refetch
+    // refetch // refetch might still be useful if needed explicitly
   } = useQuery<User | null, Error>({
     queryKey: ["/api/user"],
     queryFn: async () => {
-      console.log("Fetching user data, storedUser:", storedUser);
+      // console.log("Fetching user data"); // storedUser logic removed
       
-      // If we have a stored user, use that instead of making a network request
-      if (storedUser) {
-        console.log("Using stored user:", storedUser);
-        return storedUser;
-      }
-      
+      // Always fetch from /api/user to determine auth state via session cookie
       try {
-        console.log("Making API request to /api/user");
+        // console.log("Making API request to /api/user");
         const res = await fetch("/api/user", {
-          credentials: "include",
+          credentials: "include", // Ensures cookies are sent
         });
         
-        console.log("API response status:", res.status);
+        // console.log("API response status:", res.status);
         
         if (res.status === 401) {
-          console.log("User not authenticated");
-          return null;
+          // console.log("User not authenticated");
+          return null; // Not logged in
+        }
+        if (!res.ok) {
+          // Handle other non-401 errors if necessary
+          throw new Error(`API request failed: ${res.status} ${res.statusText}`);
         }
         
         const userData = await res.json();
-        console.log("User data from API:", userData);
+        // console.log("User data from API:", userData);
         return userData;
       } catch (e) {
-        console.error("Error fetching user:", e);
-        return null;
+        // console.error("Error fetching user:", e);
+        // Do not treat network errors as "not logged in", let error propagate
+        // or handle specific error types if needed. For now, return null.
+        // This query should ideally not throw for auth status, but for network/server errors.
+        // If it's a network error, React Query will handle it.
+        // If it's a 401, we return null. Other errors could be thrown or returned as error objects.
+        if (e instanceof Error && e.message.includes("401")) {
+            return null;
+        }
+        throw e; // Re-throw other errors to be handled by React Query's error state
       }
     },
-    initialData: storedUser,
-    staleTime: 0, // Always refetch when requested
-    refetchOnWindowFocus: true, // Refetch when window regains focus
-    refetchOnMount: true // Refetch when component mounts
+    initialData: null, // Start with no user, rely on fetch
+    staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
+    refetchOnWindowFocus: true, 
+    refetchOnMount: true, // Ensures user state is checked on mount
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      console.log("Login mutation called with:", credentials);
-      try {
-        // Use the actual API
-        const res = await apiRequest("POST", "/api/login", credentials);
-        const userData = await res.json();
-        console.log("Login response:", userData);
-        
-        // Store in localStorage for persistence
-        localStorage.setItem(AUTH_KEY, JSON.stringify(userData));
-        setStoredUser(userData);
-        
-        return userData;
-      } catch (error) {
-        console.error("Login error:", error);
-        throw error;
-      }
+      // console.log("Login mutation called with:", credentials);
+      // apiRequest already includes credentials: "include"
+      const res = await apiRequest("POST", "/api/login", credentials);
+      const userData = await res.json();
+      // console.log("Login response:", userData);
+      // localStorage.setItem and setStoredUser removed
+      return userData;
     },
     onSuccess: (user: User) => {
-      console.log("Login successful, updating query data and redirecting");
-      queryClient.setQueryData(["/api/user"], user);
+      // console.log("Login successful, updating query data and redirecting");
+      queryClient.setQueryData(["/api/user"], user); // Update React Query cache
       
-      // Force a page reload to ensure proper auth state
-      window.location.href = "/";
+      window.location.href = "/"; // Redirect
       
       toast({
         title: "Login successful",
@@ -141,29 +124,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
-      console.log("Register mutation called with:", credentials);
-      try {
-        // Use the actual API
-        const res = await apiRequest("POST", "/api/register", credentials);
-        const userData = await res.json();
-        console.log("Register response:", userData);
-        
-        // Store in localStorage for persistence
-        localStorage.setItem(AUTH_KEY, JSON.stringify(userData));
-        setStoredUser(userData);
-        
-        return userData;
-      } catch (error) {
-        console.error("Register error:", error);
-        throw error;
-      }
+      // console.log("Register mutation called with:", credentials);
+      const res = await apiRequest("POST", "/api/register", credentials);
+      const userData = await res.json();
+      // console.log("Register response:", userData);
+      // localStorage.setItem and setStoredUser removed
+      return userData;
     },
     onSuccess: (user: User) => {
-      console.log("Registration successful, updating query data and redirecting");
-      queryClient.setQueryData(["/api/user"], user);
+      // console.log("Registration successful, updating query data and redirecting");
+      queryClient.setQueryData(["/api/user"], user); // Update React Query cache
       
-      // Force a page reload to ensure proper auth state
-      window.location.href = "/";
+      window.location.href = "/"; // Redirect
       
       toast({
         title: "Registration successful",
@@ -181,35 +153,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      console.log("Logout mutation called");
-      try {
-        // Use the actual API
-        await apiRequest("POST", "/api/logout");
-        
-        // Clear localStorage
-        localStorage.removeItem(AUTH_KEY);
-        setStoredUser(null);
-      } catch (error) {
-        console.error("Logout error:", error);
-        // Even if the API call fails, clear the local storage
-        localStorage.removeItem(AUTH_KEY);
-        setStoredUser(null);
-        throw error;
-      }
+      // console.log("Logout mutation called");
+      await apiRequest("POST", "/api/logout");
+      // localStorage.removeItem and setStoredUser removed
     },
     onSuccess: () => {
-      console.log("Logout successful, updating query data and redirecting");
-      queryClient.setQueryData(["/api/user"], null);
+      // console.log("Logout successful, updating query data and redirecting");
+      queryClient.setQueryData(["/api/user"], null); // Clear user in cache
       
-      // Force a page reload to ensure proper auth state
-      window.location.href = "/auth";
+      window.location.href = "/auth"; // Redirect
       
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: Error) => { // Still clear cache on error, as session might be invalid
+      queryClient.setQueryData(["/api/user"], null);
+      window.location.href = "/auth"; // Redirect to auth page even on logout error
       toast({
         title: "Logout failed",
         description: error.message,
