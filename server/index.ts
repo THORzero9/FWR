@@ -3,7 +3,13 @@ import http from 'http'; // Import http
 import logger from './logger'; // Import the structured logger
 import { registerRoutes } from "./routes";
 import { setupAuth } from "./auth"; // Import setupAuth
-import { setupVite, serveStatic } from "./vite"; // Removed log from here
+import { setupVite, serveStatic } from "./vite"; /**
+ * Creates and configures an Express application and HTTP server with structured logging, authentication, routing, error handling, and environment-specific static asset serving.
+ *
+ * @returns An object containing the configured Express app and HTTP server.
+ *
+ * @remark Each request is assigned a unique request ID for traceable logging. Error responses expose detailed messages only in development or for trusted operational errors in production.
+ */
 
 export async function createApp(): Promise<{ app: Express, server: http.Server }> {
   const app = express();
@@ -82,7 +88,11 @@ export async function createApp(): Promise<{ app: Express, server: http.Server }
   return { app, server };
 }
 
-// Main application execution
+/**
+ * Starts the server by creating the application and listening on port 5000.
+ *
+ * Logs server startup success or logs a fatal error if startup fails.
+ */
 async function main() {
   try {
     const { server } = await createApp(); 

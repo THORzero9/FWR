@@ -10,6 +10,13 @@ import { isAuthenticated } from "./middleware/isAuthenticated"; // Import the mi
 // Helper to get request ID
 const getRequestId = (req: Request) => (req as any).id || 'unknown';
 
+/**
+ * Registers all API routes, middleware, and authentication on the provided Express app and returns an HTTP server instance.
+ *
+ * Sets up protected and public endpoints for food items, recipes, food banks, nearby users, and statistics, applying authentication and validation where required. All routes include structured logging and appropriate error handling.
+ *
+ * @returns An HTTP server instance with all API routes and middleware configured.
+ */
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes and middleware
   setupAuth(app);
