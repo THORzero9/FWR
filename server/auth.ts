@@ -27,15 +27,14 @@ declare global {
 const getRequestId = (req: Request) => (req as any).id || 'unknown';
 
 /**
- * Sets up authentication and session management for an Express application using Passport.js.
+ * Configures authentication and session management for an Express application using Passport.js.
  *
- * Configures session middleware, initializes Passport with a local strategy for username and password authentication, and registers routes for user registration, login, logout, and user information retrieval. Input validation is enforced for registration, and all sensitive user data is excluded from responses and session storage.
+ * Sets up secure session middleware, initializes Passport with a local strategy for username and password authentication, and registers routes for user registration, login, logout, and user information retrieval. Enforces input validation for registration, ensures passwords are securely hashed, and applies structured logging and robust error handling for all authentication events.
  *
- * @param app - The Express application instance to configure authentication for.
+ * @param app - The Express application instance to configure.
  *
  * @remark
- * - Session cookies are configured for security and CSRF mitigation, with expiration controlled by a "remember me" option.
- * - All authentication routes provide structured logging and robust error handling.
+ * Session cookies are secured with `httpOnly` and `sameSite: 'lax'`. The session duration is extended to 30 days if the `rememberMe` flag is set during registration or login; otherwise, it defaults to 1 day.
  */
 
 export function setupAuth(app: Express) {
@@ -131,12 +130,12 @@ const registerUserSchema = z.object({
 });
 
 /**
- * Sets up authentication and session management for an Express application using Passport.js.
+ * Configures authentication, session management, and user-related routes for an Express application using Passport.js.
  *
- * Configures session middleware, initializes Passport with a local strategy for username/password authentication, and registers routes for user registration, login, logout, and user info retrieval. Integrates input validation for registration, secure password handling, and structured logging for all authentication events.
+ * Sets up secure session middleware, initializes Passport with a local username/password strategy, and registers routes for user registration, login, logout, and authenticated user info retrieval. Integrates input validation, secure password handling, and structured logging for all authentication events.
  *
  * @remark
- * Session cookies are configured with secure, httpOnly, and sameSite settings. The session duration is extended to 30 days if the `rememberMe` flag is set during registration or login; otherwise, it defaults to 1 day.
+ * Session cookies are set with secure, httpOnly, and sameSite options. If the `rememberMe` flag is provided during registration or login, the session duration is extended to 30 days; otherwise, it defaults to 1 day.
  */
 export function setupAuth(app: Express) {
   // Configure session settings

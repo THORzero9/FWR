@@ -9,8 +9,8 @@ const SALT_ROUNDS = 10; // Standard number of rounds for bcrypt
  * @param password - The plain-text password to hash.
  * @returns A promise that resolves to the hashed password string.
  *
- * @throws {Error} If hashing fails for any reason.
- * @remark Throws a generic error message to avoid exposing sensitive details in case of failure.
+ * @throws {Error} If password hashing fails.
+ * @remark Throws a generic error message to prevent leaking sensitive error details.
  */
 export async function hashPassword(password: string): Promise<string> {
   try {
