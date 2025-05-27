@@ -26,7 +26,17 @@ declare global {
 // Helper to get request ID
 const getRequestId = (req: Request) => (req as any).id || 'unknown';
 
-// Password hashing functions (hashPassword, comparePasswords) are now imported from crypto.utils.ts
+/**
+ * Sets up authentication and session management for an Express application using Passport.js.
+ *
+ * Configures session middleware, initializes Passport with a local strategy for username and password authentication, and registers routes for user registration, login, logout, and user information retrieval. Input validation is enforced for registration, and all sensitive user data is excluded from responses and session storage.
+ *
+ * @param app - The Express application instance to configure authentication for.
+ *
+ * @remark
+ * - Session cookies are configured for security and CSRF mitigation, with expiration controlled by a "remember me" option.
+ * - All authentication routes provide structured logging and robust error handling.
+ */
 
 export function setupAuth(app: Express) {
   // Configure session settings
@@ -120,6 +130,14 @@ const registerUserSchema = z.object({
   rememberMe: z.boolean().optional().default(false),
 });
 
+/**
+ * Sets up authentication and session management for an Express application using Passport.js.
+ *
+ * Configures session middleware, initializes Passport with a local strategy for username/password authentication, and registers routes for user registration, login, logout, and user info retrieval. Integrates input validation for registration, secure password handling, and structured logging for all authentication events.
+ *
+ * @remark
+ * Session cookies are configured with secure, httpOnly, and sameSite settings. The session duration is extended to 30 days if the `rememberMe` flag is set during registration or login; otherwise, it defaults to 1 day.
+ */
 export function setupAuth(app: Express) {
   // Configure session settings
   const sessionSettings: session.SessionOptions = {
