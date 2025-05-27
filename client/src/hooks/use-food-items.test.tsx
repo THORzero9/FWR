@@ -27,6 +27,22 @@ describe('useFoodItems Hook', () => {
         queries: {
           retry: false, // Disable retries for tests
           staleTime: Infinity, // Prevent immediate refetch for tests
+          queryFn: async ({ queryKey }) => {
+            // Get the mockApiRequest from the module scope of the test file
+            // This assumes mockApiRequest is defined at the top of the test file or in a beforeEach
+            const url = queryKey[0] as string;
+            // The mockApiRequest should be the one from vi.mock('@/lib/queryClient')
+            // which is assigned to the module-level `mockApiRequest` variable in beforeEach.
+            if (!mockApiRequest) {
+              throw new Error('mockApiRequest is not defined in queryFn. Check test setup.');
+            }
+            // Match the actual defaultQueryFn which returns data, not a Response
+            const result = await mockApiRequest('GET', url, undefined);
+            // If mockApiRequest is mocked to return a Response object (like actual apiRequest)
+            // then we would do: return (await mockApiRequest('GET', url, undefined)).json();
+            // But current tests mock it to return data directly.
+            return result;
+          },
         },
       },
     });
@@ -36,9 +52,10 @@ describe('useFoodItems Hook', () => {
   };
   
   beforeEach(async () => {
-    // Dynamically import the mocked apiRequest
-    const qcModule = await import('@/lib/queryClient');
-    mockApiRequest = qcModule.apiRequest as ReturnType<typeof vi.fn>;
+    // Dynamically import the mocked apiRequest from the actual module we are mocking
+    // and assign it to our module-scoped variable.
+    const qcModule = await import('@/lib/queryClient'); // This gets the mocked version due to vi.mock
+    mockApiRequest = qcModule.apiRequest as ReturnType<typeof vi.fn>; 
     
     mockApiRequest.mockReset();
     

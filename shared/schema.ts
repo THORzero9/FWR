@@ -107,6 +107,7 @@ export const insertFoodItemSchema = createInsertSchema(foodItems).omit({
   expiryDate: z.union([z.string(), z.date()]).transform(val => 
     typeof val === 'string' ? new Date(val) : val
   ),
+  favorite: z.boolean().optional(),
 });
 
 export const insertRecipeSchema = createInsertSchema(recipes).omit({

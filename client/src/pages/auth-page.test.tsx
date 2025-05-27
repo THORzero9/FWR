@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Switch, Route } from 'wouter'; // MemoryRouter for useLocation
 import AuthPage from './auth-page'; // Adjust path as needed
+import { useAuth } from '@/hooks/use-auth'; // Import the actual hook
 
 // Mock hooks
 const mockLoginMutation = vi.fn();
@@ -10,12 +11,18 @@ const mockRegisterMutation = vi.fn();
 const mockSetLocation = vi.fn();
 const mockToast = vi.fn();
 
+// Hold a reference to the mocked useAuth
+const mockedUseAuth = useAuth as vi.MockedFunction<typeof useAuth>;
+
 vi.mock('@/hooks/use-auth', () => ({
-  useAuth: () => ({
-    user: null, // Default to no user
+  // Important: This mock factory needs to be defined before the above `mockedUseAuth` assignment
+  // if we were to initialize `mockedUseAuth` directly from `vi.mocked(useAuth)`.
+  // However, by mocking the module and then casting the imported `useAuth` later, we're fine.
+  useAuth: vi.fn(() => ({ // Make the mock function itself mockable
+    user: null,
     loginMutation: { mutate: mockLoginMutation, isPending: false },
     registerMutation: { mutate: mockRegisterMutation, isPending: false },
-  }),
+  })),
 }));
 
 vi.mock('@/hooks/use-toast', () => ({
@@ -56,7 +63,7 @@ describe('AuthPage Component', () => {
     vi.resetAllMocks(); // Reset mocks before each test
     
     // Default mock implementation for useAuth (no user, mutations not pending)
-    vi.mocked(await import('@/hooks/use-auth')).useAuth.mockReturnValue({
+    mockedUseAuth.mockReturnValue({
         user: null,
         loginMutation: { mutate: mockLoginMutation, isPending: false },
         registerMutation: { mutate: mockRegisterMutation, isPending: false },
@@ -73,7 +80,7 @@ describe('AuthPage Component', () => {
 
   it('redirects to home if user is already logged in', async () => {
      // Override default mock for this test
-    vi.mocked(await import('@/hooks/use-auth')).useAuth.mockReturnValue({
+    mockedUseAuth.mockReturnValue({
         user: { id: 1, username: 'testuser', email: 'test@example.com' },
         loginMutation: { mutate: mockLoginMutation, isPending: false },
         registerMutation: { mutate: mockRegisterMutation, isPending: false },
@@ -120,7 +127,7 @@ describe('AuthPage Component', () => {
     });
     
     it('shows "Logging in..." when loginMutation is pending', async () => {
-      vi.mocked(await import('@/hooks/use-auth')).useAuth.mockReturnValue({
+      mockedUseAuth.mockReturnValue({
         user: null,
         loginMutation: { mutate: mockLoginMutation, isPending: true }, // isPending true
         registerMutation: { mutate: mockRegisterMutation, isPending: false },
@@ -180,7 +187,7 @@ describe('AuthPage Component', () => {
     });
     
     it('shows "Creating account..." when registerMutation is pending', async () => {
-      vi.mocked(await import('@/hooks/use-auth')).useAuth.mockReturnValue({
+      mockedUseAuth.mockReturnValue({
         user: null,
         loginMutation: { mutate: mockLoginMutation, isPending: false },
         registerMutation: { mutate: mockRegisterMutation, isPending: true }, // isPending true

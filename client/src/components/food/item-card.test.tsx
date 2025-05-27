@@ -38,7 +38,7 @@ const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
 };
 
 const today = new Date();
-const_MS_PER_DAY = 1000 * 60 * 60 * 24;
+const const_MS_PER_DAY = 1000 * 60 * 60 * 24;
 const createDate = (daysFromNow: number) => new Date(today.getTime() + daysFromNow * const_MS_PER_DAY);
 
 const sampleItem: FoodItem = {
