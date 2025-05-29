@@ -20,7 +20,23 @@ describe('Recipe Hooks', () => {
   const createWrapper = () => {
     queryClient = new QueryClient({
       defaultOptions: {
-        queries: { retry: false, staleTime: Infinity },
+        queries: {
+          retry: false,
+          staleTime: Infinity,
+          queryFn: async ({ queryKey }) => {
+            let url = queryKey[0] as string;
+            if (queryKey.length > 1 && queryKey[1]) {
+              // For useRecipesForIngredients, queryKey[1] is a string of joined ingredients
+              // The actual API route is /api/recipes/match/:ingredients
+              // So, append queryKey[1] to the base path queryKey[0]
+              url = `${url}/${queryKey[1]}`;
+            }
+            if (!mockApiRequest) {
+              throw new Error('mockApiRequest is not defined in queryFn. Check test setup.');
+            }
+            return mockApiRequest('GET', url, undefined);
+          },
+        },
       },
     });
     return ({ children }: { children: React.ReactNode }) => (
