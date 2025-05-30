@@ -69,8 +69,8 @@ describe('useIsMobile Hook', () => {
     if (originalInnerWidth) {
       Object.defineProperty(window, 'innerWidth', originalInnerWidth);
     } else {
-      // If it wasn't originally defined, delete it
-      delete (window as any).innerWidth;
+      // If it wasn't originally defined, set it to undefined
+      (window as any).innerWidth = undefined;
     }
     window.matchMedia = originalMatchMedia;
     vi.clearAllMocks();
