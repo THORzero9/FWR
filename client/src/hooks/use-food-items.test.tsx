@@ -5,12 +5,15 @@ import { useFoodItems } from './use-food-items';
 import { FoodItem } from '@shared/schema'; // Assuming FoodItem type is available
 
 // Mock apiRequest from queryClient
-vi.mock('@/lib/queryClient', async (importOriginal) => {
-  const actual = await importOriginal();
+vi.mock('@/lib/queryClient', async () => {
+  /* import the real implementation so that we can extend it */
+  const actual = await vi.importActual<typeof import('@/lib/queryClient')>(
+    '@/lib/queryClient'
+  );
   return {
     ...actual,
     apiRequest: vi.fn(), // This will be mocked to control API responses
-     // queryClient will be provided by the wrapper in tests, but if the hook used a global one,
+    // queryClient will be provided by the wrapper in tests, but if the hook used a global one,
     // we might need to manage that too. For useQuery, it uses the one from context.
   };
 });
