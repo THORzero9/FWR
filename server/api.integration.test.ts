@@ -271,12 +271,11 @@ describe('API Endpoints Integration Tests', () => {
 
     it('POST /api/food-items - should return 400 for invalid data', async () => {
       const newItem = { name: 'Only Name' }; // Missing other required fields
-      const res = await authenticatedAgent.post('/api/food-items').send(newItem);
+      const res = await userAagent.post('/api/food-items').send(newItem);
       expect(res.statusCode).toBe(400);
       // Add more specific error message checks if your validation provides them
       expect(res.body.message).toContain("Validation failed");
     });
-
 
     it('PUT /api/food-items/:id - should update an existing food item', async () => {
       const allItems = await testStorage.getFoodItems();
