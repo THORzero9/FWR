@@ -5,7 +5,16 @@ import { FOOD_CATEGORIES } from '@shared/schema';
 
 describe('CategoryFilter Component', () => {
   const allCategories = ["All", ...FOOD_CATEGORIES];
+describe('CategoryFilter Component', () => {
+  const allCategories = ["All", ...FOOD_CATEGORIES];
   const mockOnCategoryChange = vi.fn();
+
+  beforeEach(() => {
+    mockOnCategoryChange.mockClear();
+  });
+
+  // ...rest of your tests
+});
 
   it('renders all categories including "All"', () => {
     render(<CategoryFilter selectedCategory="All" onCategoryChange={mockOnCategoryChange} />);
