@@ -241,7 +241,10 @@ export function setupAuth(app: Express) {
 
   app.get("/api/user", (req: Request, res: Response) => {
     const requestId = getRequestId(req);
-    if (!req.isAuthenticated || !req.isAuthenticated()) { // req.isAuthenticated might not exist if passport error
+    if (!req.isAuthenticated()) {
+       logger.debug({ requestId }, "User data requested, but user is not authenticated");
+       return res.status(401).json({ message: "Not authenticated. Please log in." });
+     }
       logger.debug({ requestId }, "User data requested, but user is not authenticated");
       return res.status(401).json({ message: "Not authenticated. Please log in." });
     }
