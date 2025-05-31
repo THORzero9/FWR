@@ -29,6 +29,11 @@ export default defineConfig({
       "@assets": path.resolve(__dirname, "attached_assets"),
     },
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './client/src/setupTests.ts',
+  },
   root: path.resolve(__dirname, "client"),
   build: {
     outDir: path.resolve(__dirname, "dist/public"),

@@ -1,0 +1,43 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main # Or master, if that's your main branch
+  pull_request:
+    branches:
+      - main # Or master
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x] # Based on VERSIONS.md
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm' # Cache npm dependencies
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Linters and Type Checkers
+        run: npm run check
+
+      - name: Run Tests
+        run: npm run test
+
+      - name: Build Application
+        run: npm run build
+        # This step is included as per the subtask.
+        # If the build process is very long or resource-intensive,
+        # it could be moved to a separate job or made conditional.
+        # For now, it's included as a standard check.
