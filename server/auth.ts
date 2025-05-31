@@ -48,7 +48,14 @@ const registerUserSchema = z.object({
 export function setupAuth(app: Express) {
   // Configure session settings
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || 'freshsave-secret-key',
+    // …
+    secret: process.env.SESSION_SECRET || (() => {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('SESSION_SECRET environment variable is required in production');
+      }
+      return 'freshsave-secret-key';
+    })(),
+    // …
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore, // Assuming storage.sessionStore is compatible
