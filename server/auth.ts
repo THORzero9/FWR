@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express, Request, Response, NextFunction } from "express"; // Added Request, Response, NextFunction
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import logger from "./logger"; // Import the structured logger
 import { storage } from "./storage";
@@ -16,109 +16,13 @@ declare global {
       username: string;
       email: string;
     }
-    // Extend Request to include our custom id if needed elsewhere, though already handled in index.ts
-    // interface Request {
-    //   id?: string;
-    // }
   }
 }
 
 // Helper to get request ID
 const getRequestId = (req: Request) => (req as any).id || 'unknown';
 
-/**
- * Sets up authentication and session management for an Express application using Passport.js.
- *
- * Configures session middleware, initializes Passport with a local strategy for username and password authentication, and registers routes for user registration, login, logout, and user information retrieval. Input validation is enforced for registration, and all sensitive user data is excluded from responses and session storage.
- *
- * @param app - The Express application instance to configure authentication for.
- *
- * @remark
- * - Session cookies are configured for security and CSRF mitigation, with expiration controlled by a "remember me" option.
- * - All authentication routes provide structured logging and robust error handling.
- */
-
-export function setupAuth(app: Express) {
-  // Configure session settings
-  const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || 'freshsave-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    store: storage.sessionStore, // Assuming storage.sessionStore is compatible
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true, // Make cookie HttpOnly
-      maxAge: 24 * 60 * 60 * 1000, // 1 day by default
-      sameSite: 'lax', // Mitigate CSRF
-    }
-  };
-
-  if (process.env.NODE_ENV === 'production') {
-    app.set("trust proxy", 1); // trust first proxy if using reverse proxy like Nginx/Heroku
-  }
-  
-  app.use(session(sessionSettings));
-  app.use(passport.initialize());
-  app.use(passport.session());
-
-  // Configure passport local strategy for username/password auth
-  passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      try {
-        const user = await storage.getUserByUsername(username);
-        
-        if (!user) {
-          logger.warn({ username }, "Login attempt failed: User not found");
-          return done(null, false, { message: "Invalid username or password" });
-        }
-        
-        if (!user.hashedPassword) { // Check for hashedPassword existence
-          logger.error({ username }, "Security Alert: User has no hashedPassword defined.");
-          return done(null, false, { message: "Invalid username or password" }); // Generic message to user
-        }
-
-        const passwordsMatch = await comparePasswords(password, user.hashedPassword);
-        if (!passwordsMatch) {
-          logger.warn({ username }, "Login attempt failed: Incorrect password");
-          return done(null, false, { message: "Invalid username or password" });
-        }
-        
-        // Exclude hashedPassword from the user object passed to done
-        const { hashedPassword, ...userWithoutPassword } = user;
-        logger.info({ userId: userWithoutPassword.id, username }, "User successfully authenticated");
-        return done(null, userWithoutPassword);
-      } catch (err: any) {
-        logger.error({ error: err.message, stack: err.stack, username }, "Error during LocalStrategy authentication");
-        return done(err);
-      }
-    })
-  );
-
-  // Configure passport session serialization
-  passport.serializeUser((user: Express.User, done) => {
-    logger.debug({ userId: user.id }, "Serializing user");
-    done(null, user.id);
-  });
-  
-  passport.deserializeUser(async (id: number, done) => {
-    logger.debug({ userId: id }, "Deserializing user");
-    try {
-      const user = await storage.getUser(id); // This should fetch only necessary, non-sensitive fields
-      if (!user) {
-        logger.warn({ userId: id }, "User not found during deserialization");
-        return done(new Error("User not found"));
-      }
-      // Ensure sensitive data like hashedPassword is not included in the deserialized user object for the session
-      const { hashedPassword, ...sessionUser } = user; 
-      done(null, sessionUser);
-    } catch (err: any) {
-      logger.error({ userId: id, error: err.message, stack: err.stack }, "Error during deserialization");
-      done(err);
-    }
-  });
-
-  // Register authentication routes
-// Zod schema for registration
+// Zod schema for registration, defined once
 const registerUserSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters long.").max(30, "Username must be no more than 30 characters long."),
   email: z.string().email("Please enter a valid email address."),
@@ -130,10 +34,13 @@ const registerUserSchema = z.object({
   rememberMe: z.boolean().optional().default(false),
 });
 
+
 /**
  * Sets up authentication and session management for an Express application using Passport.js.
  *
  * Configures session middleware, initializes Passport with a local strategy for username/password authentication, and registers routes for user registration, login, logout, and user info retrieval. Integrates input validation for registration, secure password handling, and structured logging for all authentication events.
+ *
+ * @param app - The Express application instance to configure authentication for.
  *
  * @remark
  * Session cookies are configured with secure, httpOnly, and sameSite settings. The session duration is extended to 30 days if the `rememberMe` flag is set during registration or login; otherwise, it defaults to 1 day.
@@ -156,7 +63,7 @@ export function setupAuth(app: Express) {
   if (process.env.NODE_ENV === 'production') {
     app.set("trust proxy", 1); // trust first proxy if using reverse proxy like Nginx/Heroku
   }
-  
+
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
@@ -166,12 +73,12 @@ export function setupAuth(app: Express) {
     new LocalStrategy(async (username, password, done) => {
       try {
         const user = await storage.getUserByUsername(username);
-        
+
         if (!user) {
           logger.warn({ username }, "Login attempt failed: User not found");
           return done(null, false, { message: "Invalid username or password" });
         }
-        
+
         if (!user.hashedPassword) { // Check for hashedPassword existence
           logger.error({ username }, "Security Alert: User has no hashedPassword defined.");
           return done(null, false, { message: "Invalid username or password" }); // Generic message to user
@@ -182,7 +89,7 @@ export function setupAuth(app: Express) {
           logger.warn({ username }, "Login attempt failed: Incorrect password");
           return done(null, false, { message: "Invalid username or password" });
         }
-        
+
         // Exclude hashedPassword from the user object passed to done
         const { hashedPassword, ...userWithoutPassword } = user;
         logger.info({ userId: userWithoutPassword.id, username }, "User successfully authenticated");
@@ -199,7 +106,7 @@ export function setupAuth(app: Express) {
     logger.debug({ userId: user.id }, "Serializing user");
     done(null, user.id);
   });
-  
+
   passport.deserializeUser(async (id: number, done) => {
     logger.debug({ userId: id }, "Deserializing user");
     try {
@@ -209,7 +116,7 @@ export function setupAuth(app: Express) {
         return done(new Error("User not found"));
       }
       // Ensure sensitive data like hashedPassword is not included in the deserialized user object for the session
-      const { hashedPassword, ...sessionUser } = user; 
+      const { hashedPassword, ...sessionUser } = user;
       done(null, sessionUser);
     } catch (err: any) {
       logger.error({ userId: id, error: err.message, stack: err.stack }, "Error during deserialization");
@@ -227,12 +134,12 @@ export function setupAuth(app: Express) {
       if (!validationResult.success) {
         const validationError = fromZodError(validationResult.error as ZodError);
         logger.warn({ requestId, validationErrors: validationError.details }, "Registration validation failed");
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "Validation failed. Please check the provided data.",
-          details: validationError.details 
+          details: validationError.details
         });
       }
-      
+
       const { username, email, password, rememberMe } = validationResult.data;
 
       const existingUser = await storage.getUserByUsername(username);
@@ -242,7 +149,7 @@ export function setupAuth(app: Express) {
       }
 
       const hashedPassword = await hashPassword(password);
-      
+
       const newUser = await storage.createUser({
         username,
         email,
@@ -270,7 +177,7 @@ export function setupAuth(app: Express) {
         res.status(201).json(userResponse);
       });
     } catch (error: any) {
-      logger.error({ requestId, username, error: error.message, stack: error.stack }, "Unhandled error during registration");
+      logger.error({ requestId, username: req.body.username, error: error.message, stack: error.stack }, "Unhandled error during registration");
       next(error); // Pass to global error handler
     }
   });
@@ -279,7 +186,7 @@ export function setupAuth(app: Express) {
     const requestId = getRequestId(req);
     const { username, rememberMe } = req.body; // Get username for logging
     logger.info({ requestId, username }, "Login attempt started");
-    
+
     passport.authenticate("local", (err: any, user: Express.User | false | null, info: { message: string } | undefined) => {
       if (err) {
         logger.error({ requestId, username, error: err.message, stack: err.stack }, "Error during passport.authenticate");
@@ -289,13 +196,13 @@ export function setupAuth(app: Express) {
         logger.warn({ requestId, username, message: info?.message }, "Login failed: Invalid credentials or user not found");
         return res.status(401).json({ message: info?.message || "Invalid username or password." });
       }
-      
+
       req.login(user, (loginErr) => {
         if (loginErr) {
           logger.error({ requestId, userId: user.id, error: loginErr.message, stack: loginErr.stack }, "Error during req.login");
           return next(loginErr);
         }
-        
+
         if (req.session && rememberMe === true) { // Explicitly check for true
           logger.debug({ requestId, userId: user.id }, "Setting 'rememberMe' cookie for 30 days on login");
           req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -303,7 +210,7 @@ export function setupAuth(app: Express) {
           logger.debug({ requestId, userId: user.id }, "Setting default session cookie duration (1 day) on login");
           req.session.cookie.maxAge = 24 * 60 * 60 * 1000; // Default 1 day
         }
-        
+
         logger.info({ requestId, userId: user.id }, "User logged in successfully");
         res.status(200).json(user); // user object from LocalStrategy's done callback (already without password)
       });
@@ -338,7 +245,7 @@ export function setupAuth(app: Express) {
       logger.debug({ requestId }, "User data requested, but user is not authenticated");
       return res.status(401).json({ message: "Not authenticated. Please log in." });
     }
-    
+
     logger.debug({ requestId, userId: req.user?.id }, "Returning authenticated user data");
     // req.user should already be sanitized (no password) by deserializeUser
     res.json(req.user);
